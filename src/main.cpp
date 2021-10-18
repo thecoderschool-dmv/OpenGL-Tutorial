@@ -1,6 +1,14 @@
 #include <iostream>
 #include "glad/glad.h"
 #include "glfw/glfw3.h"
+#include "settings/settings.hpp"
+
+int BackgroundColorR = 0;
+int BackgroundColorG = 0;
+int BackgroundColorB = 0;
+int BackgroundColorA = 255;
+
+bool BackgroundColorCycleDirection = true; //true means that the value is increasing, false vice versa
 
 unsigned int VAO, shaderProgram;
 
@@ -24,7 +32,7 @@ out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    FragColor = vec4(0.278f, 0.901f, 0.776f, 1.0f);
 }
 )";
 
@@ -68,7 +76,24 @@ void genTriangleData() {
 
 void render(GLFWwindow* window) {
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    if (BackgroundColorCycleDirection == true) {
+        BackgroundColorR += 2;
+        BackgroundColorG += 2;
+        BackgroundColorB += 2;
+        if (BackgroundColorR > 133) {
+            BackgroundColorCycleDirection = false;
+        }
+    }
+    else if (BackgroundColorCycleDirection == false) {
+        BackgroundColorR -= 2;
+        BackgroundColorG -= 2;
+        BackgroundColorB -= 2;
+        if (BackgroundColorR < 0) {
+            BackgroundColorCycleDirection = true;
+        }
+    }
+
+    glClearColor((float)BackgroundColorR / 255, (float)BackgroundColorG / 255, (float)BackgroundColorB / 255, BackgroundColorA / 255);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
@@ -89,7 +114,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(1440, 1080, "Yes", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(640, 360, "down the rockefeller street", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "GLFW window didn't want to exist (failed to initialize)" << std::endl;
@@ -104,7 +129,29 @@ int main()
         return -1;
     }
 
-    glViewport(0, 0, 1440, 1080);
+    glViewport(0, 0, 640, 360);
+
+
+    // settings i guess
+
+    //vsync
+    if (VSYNC_ENABLED == true) {
+        std::cout << "VSync Enabled" << std::endl;
+        glfwSwapInterval(1);
+    } else if (VSYNC_ENABLED == false) {
+        std::cout << "VSync Disabled" << std::endl;
+        glfwSwapInterval(0);
+    }
+
+    //anti-aliasing (seems to be completely broken, but prob bc the only thing being rendered is 2D)
+    if (ANTI_ALIASING_SAMPLES > 0) {
+        std::cout << "Anti-Aliasing Enabled" << std::endl;
+        glfwWindowHint(GLFW_SAMPLES, ANTI_ALIASING_SAMPLES);
+        glEnable(GL_MULTISAMPLE);
+    }
+    else {
+        std::cout << "Anti-Aliasing Disabled" << std::endl;
+    }
 
     genTriangleData();
 
