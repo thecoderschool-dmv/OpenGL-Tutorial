@@ -2,6 +2,8 @@
 #include "glad/glad.h"
 #include "glfw/glfw3.h"
 #include "settings/settings.hpp"
+#include <fstream>
+#include <string>
 
 int BackgroundColorR = 0;
 int BackgroundColorG = 0;
@@ -19,7 +21,7 @@ float vertices[] = {
 };
 
 const char* vShader = R"(#version 330 core
-layout (location = 0) in vec3 aPos;
+layout(location = 0) in vec3 aPos;
 
 void main()
 {
@@ -76,6 +78,7 @@ void genTriangleData() {
 
 void render(GLFWwindow* window) {
 
+    /*
     if (BackgroundColorCycleDirection == true) {
         BackgroundColorR += 2;
         BackgroundColorG += 2;
@@ -92,6 +95,7 @@ void render(GLFWwindow* window) {
             BackgroundColorCycleDirection = true;
         }
     }
+    */
 
     glClearColor((float)BackgroundColorR / 255, (float)BackgroundColorG / 255, (float)BackgroundColorB / 255, BackgroundColorA / 255);
     glClear(GL_COLOR_BUFFER_BIT);
