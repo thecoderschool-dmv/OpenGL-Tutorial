@@ -22,19 +22,21 @@ float vertices[] = {
 
 const char* vShader = R"(#version 330 core
 layout(location = 0) in vec3 aPos;
-
+out vec2 VertexPosition;
 void main()
 {
     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    VertexPosition = vec2(aPos.x,aPos.y);
 }
 )";
 
 const char* fShader = R"(#version 330 core
 out vec4 FragColor;
+in vec2 VertexPosition;
 
 void main()
 {
-    FragColor = vec4(0.278f, 0.901f, 0.776f, 1.0f);
+    FragColor = vec4(VertexPosition.x, 0.0f, VertexPosition.y, 1.0f);
 }
 )";
 
