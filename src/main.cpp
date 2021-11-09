@@ -107,7 +107,7 @@ void render(GLFWwindow* window) {
     glUseProgram(shaderProgram);
 
     float TimeValue = glfwGetTime();
-    float Frequency = 1;
+    float Frequency = ((sin(TimeValue)) * 4) + 4; // exponential seizure owo
     float RValue = (sin(TimeValue*Frequency) / 2.0f) + 0.5f;
     float GValue = (sin(TimeValue*Frequency) / 4.0f) + 0.25f;
     float BValue = (sin(TimeValue*Frequency) / 10.0f) + 0.1f;
