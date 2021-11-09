@@ -15,7 +15,7 @@ bool BackgroundColorCycleDirection = true; //true means that the value is increa
 unsigned int VAO, shaderProgram;
 
 float vertices[] = {
-  -0.5f, -0.5f, 0.0f,
+  -0.5f, -0.5f, 1.0f,
     0.5f, -0.5f, 0.0f,
     0.0f,  0.5f, 0.0f
 };
@@ -34,9 +34,11 @@ const char* fShader = R"(#version 330 core
 out vec4 FragColor;
 in vec2 VertexPosition;
 
+uniform vec3 CurrentColor;
+
 void main()
 {
-    FragColor = vec4(VertexPosition.x, 0.0f, VertexPosition.y, 1.0f);
+    FragColor = vec4(CurrentColor.xyz, 1.0f);
 }
 )";
 
@@ -103,6 +105,15 @@ void render(GLFWwindow* window) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
+
+    float TimeValue = glfwGetTime();
+    float Frequency = 1;
+    float RValue = (sin(TimeValue*Frequency) / 2.0f) + 0.5f;
+    float GValue = (sin(TimeValue*Frequency) / 4.0f) + 0.25f;
+    float BValue = (sin(TimeValue*Frequency) / 10.0f) + 0.1f;
+    int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
+    glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+
     glBindVertexArray(VAO);
 
 
@@ -149,7 +160,7 @@ int main()
         glfwSwapInterval(0);
     }
 
-    //anti-aliasing (seems to be completely broken, but prob bc the only thing being rendered is 2D)
+    //anti-aliasing (completely borked and i don't know why)
     if (ANTI_ALIASING_SAMPLES > 0) {
         std::cout << "Anti-Aliasing Enabled" << std::endl;
         glfwWindowHint(GLFW_SAMPLES, ANTI_ALIASING_SAMPLES);
