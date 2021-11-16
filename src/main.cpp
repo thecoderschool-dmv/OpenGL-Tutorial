@@ -12,7 +12,7 @@ int BackgroundColorA = 255;
 
 bool BackgroundColorCycleDirection = true; //true means that the value is increasing, false vice versa
 
-unsigned int VAO, shaderProgram;
+unsigned int VAO, shaderProgram, skibidabopmmprogram;
 
 float vertices[] = {
   -0.5f, -0.5f, 1.0f,
@@ -42,6 +42,22 @@ void main()
 }
 )";
 
+const char* skibidabopmmdada = R"(#version 330 core
+out vec4 FragColor;
+in vec2 VertexPosition;
+
+uniform float TIME;
+
+void main()
+{
+    float Frequency = (VertexPosition.y*VertexPosition.x)*(TIME*TIME*TIME*TIME*TIME)*(VertexPosition.y*VertexPosition.x);
+    float RValue = (sin(TIME*(VertexPosition.y*VertexPosition.x)) / 2.0f) + 0.52f;
+    float GValue = (sin((TIME*TIME*TIME*TIME)*(VertexPosition.y*VertexPosition.x)) / 4.0f) + 0.25f;
+    float BValue = (sin(TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*VertexPosition.y*VertexPosition.x*VertexPosition.x/pow(TIME,TIME)*VertexPosition.y) / 10.0f * (67326836)) + 0.74f;
+    FragColor = vec4(RValue,GValue,BValue, 1.0f);
+}
+)";
+
 void genTriangleData() {
 
     glGenVertexArrays(1, &VAO);
@@ -54,6 +70,8 @@ void genTriangleData() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+
 
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -73,6 +91,27 @@ void genTriangleData() {
     glLinkProgram(shaderProgram);
 
     glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+
+
+    unsigned int SkibidaBopMMVertex;
+    SkibidaBopMMVertex = glCreateShader(GL_VERTEX_SHADER);
+
+    glShaderSource(SkibidaBopMMVertex, 1, &vShader, NULL);
+    glCompileShader(SkibidaBopMMVertex);
+
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(fragmentShader, 1, &skibidabopmmdada, NULL);
+    glCompileShader(fragmentShader);
+
+    skibidabopmmprogram = glCreateProgram();
+    glAttachShader(skibidabopmmprogram, SkibidaBopMMVertex);
+    glAttachShader(skibidabopmmprogram, fragmentShader);
+    glLinkProgram(skibidabopmmprogram);
+
+    glDeleteShader(SkibidaBopMMVertex);
     glDeleteShader(fragmentShader);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -104,15 +143,36 @@ void render(GLFWwindow* window) {
     glClearColor((float)BackgroundColorR / 255, (float)BackgroundColorG / 255, (float)BackgroundColorB / 255, BackgroundColorA / 255);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(shaderProgram);
+    if (PASS_COLOR_CYCLE_TO_GPU_AS_TIME == true) {
+        glUseProgram(skibidabopmmprogram);
+    }
+    else {
+        glUseProgram(shaderProgram);
+    };
 
     float TimeValue = glfwGetTime();
-    float Frequency = ((sin(TimeValue)) * 4) + 4; // exponential seizure owo
-    float RValue = (sin(TimeValue*Frequency) / 2.0f) + 0.5f;
-    float GValue = (sin(TimeValue*Frequency) / 4.0f) + 0.25f;
-    float BValue = (sin(TimeValue*Frequency) / 10.0f) + 0.1f;
-    int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
-    glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+    //float Frequency = ((sin(TimeValue)) * 4) + 4; // exponential seizure owo
+    //float Frequency = 2;
+    if (COLOR_CYCLE_EXPONENTIAL_SEIZURE == true && PASS_COLOR_CYCLE_TO_GPU_AS_TIME == false) {
+        float Frequency = ((sin(TimeValue)) * 4) + 4;
+        float RValue = (sin(TimeValue * Frequency) / 2.0f) + 0.5f;
+        float GValue = (sin(TimeValue * Frequency) / 4.0f) + 0.25f;
+        float BValue = (sin(TimeValue * Frequency) / 10.0f) + 0.1f;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
+        glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+    }
+    else if (COLOR_CYCLE_EXPONENTIAL_SEIZURE == false && PASS_COLOR_CYCLE_TO_GPU_AS_TIME == false) {
+        float Frequency = COLOR_CYCLE_FREQUENCY;
+        float RValue = (sin(TimeValue * Frequency) / 2.0f) + 0.5f;
+        float GValue = (sin(TimeValue * Frequency) / 4.0f) + 0.25f;
+        float BValue = (sin(TimeValue * Frequency) / 10.0f) + 0.1f;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
+        glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+    }
+    else {
+        int vertexColorLocation = glGetUniformLocation(skibidabopmmprogram, "TIME");
+        glUniform1f(vertexColorLocation, TimeValue);
+    };
 
     glBindVertexArray(VAO);
 
