@@ -2,6 +2,7 @@
 #include "glad/glad.h"
 #include "glfw/glfw3.h"
 #include "settings/settings.hpp"
+#include "shader.hpp"
 #include <fstream>
 #include <string>
 
@@ -12,12 +13,21 @@ int BackgroundColorA = 255;
 
 bool BackgroundColorCycleDirection = true; //true means that the value is increasing, false vice versa
 
-unsigned int VAO, shaderProgram, skibidabopmmprogram;
+unsigned int VAO;
+Shader* deezshaders;
+Shader* skibidabopmmdada;
+
 
 float vertices[] = {
-  -0.5f, -0.5f, 1.0f,
+  -0.5f, -0.5f, 0.0f,
     0.5f, -0.5f, 0.0f,
-    0.0f,  0.5f, 0.0f
+    0.5f,  0.5f, 0.0f,
+    -0.5f, 0.5f, 0.0f
+};
+
+unsigned int EBO[] = {
+    0,1,2,
+    0,2,3
 };
 
 const char* vShader = R"(#version 330 core
@@ -42,7 +52,7 @@ void main()
 }
 )";
 
-const char* skibidabopmmdada = R"(#version 330 core
+const char* skibidabopmmdadadada = R"(#version 330 core
 out vec4 FragColor;
 in vec2 VertexPosition;
 
@@ -71,48 +81,15 @@ void genTriangleData() {
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    unsigned int ebo;
+    glGenBuffers(1, &ebo);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(EBO), EBO, GL_STATIC_DRAW);
 
-    glShaderSource(vertexShader, 1, &vShader, NULL);
-    glCompileShader(vertexShader);
-
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(fragmentShader, 1, &fShader, NULL);
-    glCompileShader(fragmentShader);
-
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-
-
-    unsigned int SkibidaBopMMVertex;
-    SkibidaBopMMVertex = glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource(SkibidaBopMMVertex, 1, &vShader, NULL);
-    glCompileShader(SkibidaBopMMVertex);
-
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(fragmentShader, 1, &skibidabopmmdada, NULL);
-    glCompileShader(fragmentShader);
-
-    skibidabopmmprogram = glCreateProgram();
-    glAttachShader(skibidabopmmprogram, SkibidaBopMMVertex);
-    glAttachShader(skibidabopmmprogram, fragmentShader);
-    glLinkProgram(skibidabopmmprogram);
-
-    glDeleteShader(SkibidaBopMMVertex);
-    glDeleteShader(fragmentShader);
+    deezshaders = new Shader("triangle/vShader.glsl", "triangle/fShader.glsl");
+    skibidabopmmdada = new Shader("triangle/vshader.glsl", "triangle/skibidabopmmdada.glsl");
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -144,10 +121,10 @@ void render(GLFWwindow* window) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (PASS_COLOR_CYCLE_TO_GPU_AS_TIME == true) {
-        glUseProgram(skibidabopmmprogram);
+        skibidabopmmdada->use();
     }
     else {
-        glUseProgram(shaderProgram);
+        deezshaders->use();
     };
 
     float TimeValue = glfwGetTime();
@@ -158,20 +135,21 @@ void render(GLFWwindow* window) {
         float RValue = (sin(TimeValue * Frequency) / 2.0f) + 0.5f;
         float GValue = (sin(TimeValue * Frequency) / 4.0f) + 0.25f;
         float BValue = (sin(TimeValue * Frequency) / 10.0f) + 0.1f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
-        glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+        //int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
+        //glUniform3f(vertexColorLocation, RValue, GValue, BValue);
     }
     else if (COLOR_CYCLE_EXPONENTIAL_SEIZURE == false && PASS_COLOR_CYCLE_TO_GPU_AS_TIME == false) {
         float Frequency = COLOR_CYCLE_FREQUENCY;
         float RValue = (sin(TimeValue * Frequency) / 2.0f) + 0.5f;
         float GValue = (sin(TimeValue * Frequency) / 4.0f) + 0.25f;
         float BValue = (sin(TimeValue * Frequency) / 10.0f) + 0.1f;
-        int vertexColorLocation = glGetUniformLocation(shaderProgram, "CurrentColor");
-        glUniform3f(vertexColorLocation, RValue, GValue, BValue);
+        deezshaders->setVec3("CurrentColor", RValue, GValue, BValue);
+        //glUniform3f(vertexColorLocation, RValue, GValue, BValue);
     }
     else {
-        int vertexColorLocation = glGetUniformLocation(skibidabopmmprogram, "TIME");
-        glUniform1f(vertexColorLocation, TimeValue);
+        //int vertexColorLocation = glGetUniformLocation(skibidabopmmprogram, "TIME");
+        //glUniform1f(vertexColorLocation, TimeValue);
+        skibidabopmmdada->setFloat("IKnowWhatItIsButWhenYouAskMeIDont",TimeValue);
     };
 
     glBindVertexArray(VAO);
@@ -179,7 +157,7 @@ void render(GLFWwindow* window) {
 
 
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 }
 
