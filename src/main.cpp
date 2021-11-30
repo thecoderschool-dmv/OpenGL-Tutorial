@@ -5,6 +5,9 @@
 #include "shader.hpp"
 #include <fstream>
 #include <string>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 int BackgroundColorR = 0;
 int BackgroundColorG = 0;
@@ -19,54 +22,31 @@ Shader* skibidabopmmdada;
 
 
 float vertices[] = {
-  -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    0.5f,  0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f
+  -0.5f, -0.5f, 0.5f,
+    0.5f, -0.5f, 0.5f,
+    0.5f,  0.5f, 0.5f,
+    -0.5f, 0.5f, 0.5f,
+
+    -0.5f, -0.5f, -0.5f,
+    0.5f, -0.5f, -0.5f,
+    0.5f,  0.5f, -0.5f,
+    -0.5f, 0.5f, -0.5f
 };
 
 unsigned int EBO[] = {
     0,1,2,
-    0,2,3
+    0,2,3,
+    4,5,6,
+    4,6,7,
+    0,4,7,
+    0,7,3,
+    1,5,6,
+    1,6,2,
+    0,1,5,
+    0,5,4,
+    3,6,7,
+    3,6,2
 };
-
-const char* vShader = R"(#version 330 core
-layout(location = 0) in vec3 aPos;
-out vec2 VertexPosition;
-void main()
-{
-    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    VertexPosition = vec2(aPos.x,aPos.y);
-}
-)";
-
-const char* fShader = R"(#version 330 core
-out vec4 FragColor;
-in vec2 VertexPosition;
-
-uniform vec3 CurrentColor;
-
-void main()
-{
-    FragColor = vec4(CurrentColor.xyz, 1.0f);
-}
-)";
-
-const char* skibidabopmmdadadada = R"(#version 330 core
-out vec4 FragColor;
-in vec2 VertexPosition;
-
-uniform float TIME;
-
-void main()
-{
-    float Frequency = (VertexPosition.y*VertexPosition.x)*(TIME*TIME*TIME*TIME*TIME)*(VertexPosition.y*VertexPosition.x);
-    float RValue = (sin(TIME*(VertexPosition.y*VertexPosition.x)) / 2.0f) + 0.52f;
-    float GValue = (sin((TIME*TIME*TIME*TIME)*(VertexPosition.y*VertexPosition.x)) / 4.0f) + 0.25f;
-    float BValue = (sin(TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*TIME*VertexPosition.y*VertexPosition.x*VertexPosition.x/pow(TIME,TIME)*VertexPosition.y) / 10.0f * (67326836)) + 0.74f;
-    FragColor = vec4(RValue,GValue,BValue, 1.0f);
-}
-)";
 
 void genTriangleData() {
 
@@ -118,13 +98,31 @@ void render(GLFWwindow* window) {
     */
 
     glClearColor((float)BackgroundColorR / 255, (float)BackgroundColorG / 255, (float)BackgroundColorB / 255, BackgroundColorA / 255);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (PASS_COLOR_CYCLE_TO_GPU_AS_TIME == true) {
         skibidabopmmdada->use();
+
+        glm::mat4 rotation = glm::mat4(1.0f);
+        rotation = glm::rotate(rotation, glm::radians((float)glfwGetTime() * 64.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, -0.2f, -3.0f));
+
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+        glm::mat4 beesechurger = projection * view * rotation;
+        skibidabopmmdada->setMat4("cheeseburger",beesechurger);
     }
     else {
         deezshaders->use();
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
     };
 
     float TimeValue = glfwGetTime();
@@ -149,7 +147,7 @@ void render(GLFWwindow* window) {
     else {
         //int vertexColorLocation = glGetUniformLocation(skibidabopmmprogram, "TIME");
         //glUniform1f(vertexColorLocation, TimeValue);
-        skibidabopmmdada->setFloat("IKnowWhatItIsButWhenYouAskMeIDont",TimeValue);
+        skibidabopmmdada->setFloat("t",TimeValue);
     };
 
     glBindVertexArray(VAO);
@@ -157,7 +155,7 @@ void render(GLFWwindow* window) {
 
 
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 }
 
@@ -208,6 +206,7 @@ int main()
         std::cout << "Anti-Aliasing Disabled" << std::endl;
     }
 
+    glEnable(GL_DEPTH_TEST);
     genTriangleData();
 
     while (!glfwWindowShouldClose(window))
