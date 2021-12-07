@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 int BackgroundColorR = 0;
 int BackgroundColorG = 0;
@@ -16,21 +18,22 @@ int BackgroundColorA = 255;
 
 bool BackgroundColorCycleDirection = true; //true means that the value is increasing, false vice versa
 
+unsigned int TextureID;
 unsigned int VAO;
 Shader* deezshaders;
 Shader* skibidabopmmdada;
 
 
 float vertices[] = {
-  -0.5f, -0.5f, 0.5f,
-    0.5f, -0.5f, 0.5f,
-    0.5f,  0.5f, 0.5f,
-    -0.5f, 0.5f, 0.5f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 1.0f,
+    0.5f, -0.5f, 0.5f, 1.0f, 1.0f,
+    0.5f,  0.5f, 0.5f, 1.0f, 0.0f,
+    -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    -0.5f, 0.5f, -0.5f
+    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+    0.5f,  0.5f, -0.5f, 1.0f, 0.0f,
+    -0.5f, 0.5f, -0.5f, 0.0f, 0.0f
 };
 
 unsigned int EBO[] = {
@@ -71,8 +74,10 @@ void genTriangleData() {
     deezshaders = new Shader("triangle/vShader.glsl", "triangle/fShader.glsl");
     skibidabopmmdada = new Shader("triangle/vshader.glsl", "triangle/skibidabopmmdada.glsl");
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)3);
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
 }
 
@@ -96,6 +101,9 @@ void render(GLFWwindow* window) {
         }
     }
     */
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, TextureID);
 
     glClearColor((float)BackgroundColorR / 255, (float)BackgroundColorG / 255, (float)BackgroundColorB / 255, BackgroundColorA / 255);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -159,6 +167,30 @@ void render(GLFWwindow* window) {
 
 }
 
+void buildTexture() {
+    glGenTextures(1, &TextureID);
+    glBindTexture(GL_TEXTURE_2D, TextureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int Width, Height, Channels;
+
+    unsigned char* ImageData = stbi_load("resources/textures/WoodTableDiffuse.png",&Width,&Height,&Channels,0);
+    if (ImageData)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, ImageData);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(ImageData);
+};
+
 int main()
 {
     glfwInit();
@@ -208,6 +240,7 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     genTriangleData();
+    buildTexture();
 
     while (!glfwWindowShouldClose(window))
     {
