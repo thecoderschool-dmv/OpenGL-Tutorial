@@ -191,6 +191,27 @@ void buildTexture() {
     stbi_image_free(ImageData);
 };
 
+unsigned int* GenerateEBO(int StartPos) {
+    unsigned int EBO[] = {
+        0,1,2,
+        0,2,3,
+        4,5,6,
+        4,6,7,
+        0,4,7,
+        0,7,3,
+        1,5,6,
+        1,6,2,
+        0,1,5,
+        0,5,4,
+        3,6,7,
+        3,6,2
+    };
+    for (int i = 0; i < sizeof(EBO) / sizeof(EBO[0]); i++) {
+        EBO[i] += StartPos;
+    }
+    return EBO;
+}
+
 int main()
 {
     glfwInit();
